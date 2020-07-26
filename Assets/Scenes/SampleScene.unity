@@ -233,7 +233,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58d650a33194c404db647d7b2d5d9de3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  inImg: {fileID: 2800000, guid: da4a9de3f9ddb7e4080372957e3dd6f7, type: 3}
+  inImg: {fileID: 2800000, guid: e2eeda741614a214580bb3dd122d5af7, type: 3}
   tolerance: 0
   filename: newtest00_1
   mat: {fileID: 2100000, guid: ba7fe65fdd490004bb6e4d73da3ce204, type: 2}
@@ -340,7 +340,7 @@ Transform:
   m_GameObject: {fileID: 1114086835}
   m_LocalRotation: {x: 0, y: 0.7071068, z: -0.7071068, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7663926, y: 0.99999994, z: 0.99529046}
+  m_LocalScale: {x: 1.4049346, y: 0.99999994, z: 0.99529046}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
