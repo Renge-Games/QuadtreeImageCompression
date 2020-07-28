@@ -21,9 +21,9 @@ public class CompressImage1 : MonoBehaviour {
 	int index = 0;
 
 	private void Start() {
-		//float temp = Time.realtimeSinceStartup;
+		float temp = Time.realtimeSinceStartup;
 		QTTexture1 qt = Compress();
-		//Debug.Log("Compression Time: " + (Time.realtimeSinceStartup - temp));
+		Debug.Log("Compression Time: " + (Time.realtimeSinceStartup - temp));
 		//temp = Time.realtimeSinceStartup;
 		//qt.SaveToFile(Application.persistentDataPath + "/" + filename + ".qtimg");
 		//Debug.Log("Save Time: " + (Time.realtimeSinceStartup - temp));

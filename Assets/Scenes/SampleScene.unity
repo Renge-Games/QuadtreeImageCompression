@@ -121,6 +121,53 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &341389939
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 341389940}
+  - component: {fileID: 341389941}
+  m_Layer: 0
+  m_Name: ImageCompressor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &341389940
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 341389939}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.26197976, y: 0.21763527, z: -5.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &341389941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 341389939}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58d650a33194c404db647d7b2d5d9de3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inImg: {fileID: 2800000, guid: da4a9de3f9ddb7e4080372957e3dd6f7, type: 3}
+  tolerance: 3
+  filename: rediculouslysmall03
+  mat: {fileID: 2100000, guid: ba7fe65fdd490004bb6e4d73da3ce204, type: 2}
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -213,30 +260,47 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 815779609}
+  - component: {fileID: 815779610}
   - component: {fileID: 815779608}
   m_Layer: 0
-  m_Name: ImageCompressor
+  m_Name: VideoCompressor
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &815779608
-MonoBehaviour:
+  m_IsActive: 0
+--- !u!328 &815779608
+VideoPlayer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 815779607}
   m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 58d650a33194c404db647d7b2d5d9de3, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  inImg: {fileID: 2800000, guid: e2eeda741614a214580bb3dd122d5af7, type: 3}
-  tolerance: 0
-  filename: newtest00_1
-  mat: {fileID: 2100000, guid: ba7fe65fdd490004bb6e4d73da3ce204, type: 2}
+  m_VideoClip: {fileID: 32900000, guid: 8eb726ecf970f9f49a1ca62bec560fb1, type: 3}
+  m_TargetCameraAlpha: 1
+  m_TargetCamera3DLayout: 0
+  m_TargetCamera: {fileID: 0}
+  m_TargetTexture: {fileID: 0}
+  m_TimeReference: 0
+  m_TargetMaterialRenderer: {fileID: 0}
+  m_TargetMaterialProperty: _MainTex
+  m_RenderMode: 4
+  m_AspectRatio: 2
+  m_DataSource: 0
+  m_PlaybackSpeed: 1
+  m_AudioOutputMode: 0
+  m_TargetAudioSources: []
+  m_DirectAudioVolumes: []
+  m_Url: 
+  m_EnabledAudioTracks: 
+  m_DirectAudioMutes: 
+  m_ControlledAudioTrackCount: 0
+  m_PlayOnAwake: 0
+  m_SkipOnDrop: 0
+  m_Looping: 0
+  m_WaitForFirstFrame: 0
+  m_FrameReadyEventEnabled: 0
 --- !u!4 &815779609
 Transform:
   m_ObjectHideFlags: 0
@@ -251,6 +315,19 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &815779610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 815779607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 843965d87833b83469599f4bb3b97a1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  mat: {fileID: 2100000, guid: ba7fe65fdd490004bb6e4d73da3ce204, type: 2}
 --- !u!1 &1114086835
 GameObject:
   m_ObjectHideFlags: 0
@@ -340,7 +417,7 @@ Transform:
   m_GameObject: {fileID: 1114086835}
   m_LocalRotation: {x: 0, y: 0.7071068, z: -0.7071068, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.4049346, y: 0.99999994, z: 0.99529046}
+  m_LocalScale: {x: 1.7814599, y: 1, z: 0.99529046}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2
