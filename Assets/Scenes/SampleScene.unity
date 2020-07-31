@@ -165,9 +165,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   inImg: {fileID: 2800000, guid: da4a9de3f9ddb7e4080372957e3dd6f7, type: 3}
-  tolerance: 3
-  filename: rediculouslysmall03
+  tolerance: 9
   mat: {fileID: 2100000, guid: ba7fe65fdd490004bb6e4d73da3ce204, type: 2}
+  filename: rediculouslysmall09
+  load: 0
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0
@@ -417,7 +418,7 @@ Transform:
   m_GameObject: {fileID: 1114086835}
   m_LocalRotation: {x: 0, y: 0.7071068, z: -0.7071068, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.7814599, y: 1, z: 0.99529046}
+  m_LocalScale: {x: 1.7782489, y: 1, z: 1.001723}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 2

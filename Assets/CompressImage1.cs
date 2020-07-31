@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -11,46 +12,59 @@ public class CompressImage1 : MonoBehaviour {
 	Texture2D inImg;
 	[SerializeField]
 	float tolerance = 0.1f;
-	[SerializeField]
-	string filename;
+	
 	Texture2D textureOutput;
 	public Material mat;
+
+	[SerializeField]
+	string filename;
+	public bool load = false;
 
 	float counter = 0;
 	float limit = 1;
 	int index = 0;
 
+	QTTexture1 qt;
+
 	private void Start() {
 		float temp = Time.realtimeSinceStartup;
-		QTTexture1 qt = Compress();
-		Debug.Log("Compression Time: " + (Time.realtimeSinceStartup - temp));
+		qt = new QTTexture1();
+		if (load) qt.LoadTexture(Application.persistentDataPath + "/" + filename + ".qtimg");
+		else qt.LoadTexture(inImg, tolerance);
+		//Debug.Log("Compression Time: " + (Time.realtimeSinceStartup - temp));
 		//temp = Time.realtimeSinceStartup;
-		//qt.SaveToFile(Application.persistentDataPath + "/" + filename + ".qtimg");
+		if(!load) qt.SaveToFile(Application.persistentDataPath + "/" + filename + ".qtimg");
+		//Debug.Log(Application.dataPath);
 		//Debug.Log("Save Time: " + (Time.realtimeSinceStartup - temp));
+
 		textureOutput = qt.ToTexture2D();
 		mat.SetTexture(Shader.PropertyToID("_MainTex"), textureOutput);
+
 		//Debug.Log(Application.persistentDataPath);
+		Debug.Log("Done Compressing");
 	}
 
-	void FixedUpdate() {
-		counter += Time.fixedDeltaTime;
-		if (counter >= limit) {
-			Debug.Log("Compressing incremental");
-			counter = 0;
-			tolerance += 1f;
-			QTTexture1 qt = Compress();
-			//qt.SaveToFile(Application.persistentDataPath + "/video" + (index++) + ".qtimg");
-			textureOutput = qt.ToTexture2D();
-			mat.SetTexture(Shader.PropertyToID("_MainTex"), textureOutput);
-		}
-	}
+	//void FixedUpdate() {
+	//	//counter += Time.fixedDeltaTime;
+	//	if (counter >= limit) {
+	//		Debug.Log("Compressing incremental");
+	//		counter = 0;
+	//		tolerance += 1f;
+	//		QTTexture1 qt = Compress();
+	//		//qt.SaveToFile(Application.persistentDataPath + "/video" + (index++) + ".qtimg");
+	//		textureOutput = qt.ToTexture2D();
+	//		mat.SetTexture(Shader.PropertyToID("_MainTex"), textureOutput);
+	//	}
+	//}
+	int texIndex = 0;
+    private void FixedUpdate() {
 
-	QTTexture1 Compress() {
-		QTTexture1 qt = new QTTexture1();
-		qt.loadTexture(inImg, tolerance);
-
-		return qt;
-	}
+        //      for (; texIndex < 10000; texIndex++) {
+        //	qt.ToTexture2DStep();
+        //}
+        //textureOutput = qt.ToTexture2DStep();
+        //mat.SetTexture(Shader.PropertyToID("_MainTex"), textureOutput);
+    }
 }
 
 class QTTexture1 {
@@ -58,68 +72,190 @@ class QTTexture1 {
 	int width;
 	int height;
 	byte pow;
+	QuadtreeLeaves savedData;
 
 	public QTTexture1() {
+		savedData = null;
 		data = new Quadtree1();
 		width = 0;
 		height = 0;
 		pow = 0;
 	}
 
-	public void loadTexture(Texture2D tex, float tolerance) {
+	public void LoadTexture(Texture2D tex, float tolerance) {
 		width = tex.width;
 		height = tex.height;
 		data.insertTexture(tex, tolerance, out pow);
 	}
 
-	public static QuadtreeLeaves loadTexture(string path) {
+	public void LoadTexture(string path) {
 		if (File.Exists(path)) {
 			BinaryFormatter formatter = new BinaryFormatter();
 			FileStream stream = new FileStream(path, FileMode.Open);
 
-			QuadtreeLeaves qtl = formatter.Deserialize(stream) as QuadtreeLeaves;
+			savedData = (QuadtreeLeaves)formatter.Deserialize(stream);
+			width = savedData.width;
+			height = savedData.height;
 
 			stream.Close();
-			return qtl;
 		} else {
 			Debug.LogError("QT Image not found");
-			return null;
 		}
 	}
 
 	public void SaveToFile(string path) {
+		if (savedData != null) return;
+
 		BinaryFormatter formatter = new BinaryFormatter();
 		FileStream stream = new FileStream(path, FileMode.Create);
-		QuadtreeLeaves leaves = new QuadtreeLeaves(data.GetLeaves(pow), width, height, pow);
+		var orderedNodes = data.GetLeaves(pow, width, height).OrderBy(p => (p.pos & 0xFFFF)).ThenBy(p => (p.pos >> 16));
+		QuadtreeLeaves leaves = new QuadtreeLeaves(orderedNodes.ToArray(), width, height);
 		formatter.Serialize(stream, leaves);
 		stream.Close();
 
 	}
 
 	public Texture2D ToTexture2D() {
-		return data.ToTexture2D(width, height, pow);
+		if(savedData == null) return data.ToTexture2D(width, height, pow);
+
+		//generate from loaded qtimg
+		Texture2D tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+		var colors = tex.GetPixels32();
+
+		//initialize with black
+		for (int i = 0; i < colors.Length; i++) {
+			colors[i] = new Color32(0, 0, 0, 0);
+		}
+
+		int smallestSize = (int)Math.Pow(2, savedData.smallestPow);
+		int nodeIndex = 0;
+		
+		for(int y = 0; y < height; y += smallestSize) {
+			int x = 0;
+			while (x < width) {
+				if (colors[x + y * width].a != 0) {
+					x++;
+					continue;
+				}
+				if (nodeIndex >= savedData.GetLeafCount()) break;
+				var leaf = savedData.GetLeaf(nodeIndex++);
+				int size = (int)Math.Pow(2, leaf.pow);
+				if(leaf.pow > 5) {
+					int asdf = 0;
+                }
+				if(leaf.pow >= 1) {
+					int asdf = 0;
+                }
+				for (int x2 = 0; x2 < size; x2++) {
+                    for (int y2 = 0; y2 < size; y2++) {
+						int colorIndex = (x + x2) + (y + y2) * width;
+						if ((x + x2) >= width || (y + y2) >= height) continue;
+						colors[colorIndex].r = leaf.r;
+						colors[colorIndex].g = leaf.g;
+						colors[colorIndex].b = leaf.b;
+						colors[colorIndex].a = 255;
+					}
+				}
+			}
+        }
+
+		tex.SetPixels32(colors);
+		tex.Apply();
+
+		return tex;
 	}
+
+
+    int lastX = 0;
+    int lastY = 0;
+    int lastNodeIndex = 0;
+    Texture2D lastTex = null;
+
+    public Texture2D ToTexture2DStep() {
+        Color32[] colors;
+
+        if (lastTex == null) {
+            lastTex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            colors = lastTex.GetPixels32();
+            for (int i = 0; i < colors.Length; i++) {
+                colors[i] = new Color32(0, 0, 0, 0);
+            }
+        } else {
+            colors = lastTex.GetPixels32();
+        }
+
+
+
+        int smallestSize = (int)Math.Pow(2, savedData.smallestPow);
+        bool stepped = false;
+
+        for (; lastY < height; lastY += smallestSize) {
+            if (lastX >= width) lastX = 0;
+
+            while (lastX < width) {
+                if (colors[lastX + lastY * width].a != 0) {
+                    lastX++;
+                    continue;
+                }
+                
+				if (lastNodeIndex >= savedData.GetLeafCount()) break;
+                var leaf = savedData.GetLeaf(lastNodeIndex++);
+                int size = (int)Math.Pow(2, leaf.pow);
+                for (int x2 = 0; x2 < size; x2++) {
+                    for (int y2 = 0; y2 < size; y2++) {
+                        int colorIndex = (lastX + x2) + (lastY + y2) * width;
+                        if ((lastX + x2) >= width || (lastY + y2) >= height) continue;
+                        colors[colorIndex].r = leaf.r;
+                        colors[colorIndex].g = leaf.g;
+                        colors[colorIndex].b = leaf.b;
+                        colors[colorIndex].a = 255;
+                    }
+                }
+				stepped = true;
+				if (stepped) break;
+			}
+            if (stepped) break;
+        }
+
+        lastTex.SetPixels32(colors);
+        lastTex.Apply();
+
+        return lastTex;
+    }
 }
 
 [Serializable]
 class QuadtreeLeaves {
-	int width, height;
-	byte pow;
+	public int width, height;
+	public byte smallestPow;
 
 	public byte[] pows;
-	public uint[] pos;
+	//public uint[] pos;
 	public byte[] r, g, b;
 
-	public QuadtreeLeaves(QuadtreeLeaf[] leaves, int width, int height, byte pow) {
-		pows = new byte[leaves.Length];
-		pos = new uint[leaves.Length];
+	public QuadtreeLeaves(QuadtreeLeaf[] leaves, int width, int height) {
+		if (leaves.Length % 2 == 0)
+			pows = new byte[leaves.Length / 2];
+		else
+			pows = new byte[leaves.Length / 2 + 1];
+		//pos = new uint[leaves.Length];
+
 		r = new byte[leaves.Length];
 		g = new byte[leaves.Length];
 		b = new byte[leaves.Length];
 
+		//denotes whether the next pow is stored in the high 4 bits or the low four bits of a byte
+		bool high = true;
 		for (int i = 0; i < leaves.Length; i++) {
-			pows[i] = leaves[i].pow;
-			pos[i] = leaves[i].pos;
+            if (high) {
+				pows[i / 2] = (byte)(leaves[i].pow << 4);
+            } else {
+				pows[i / 2] += leaves[i].pow;
+            }
+			//toggle
+			high = !high;
+			smallestPow = (byte)(Convert.ToByte(leaves[i].pow < smallestPow) * leaves[i].pow + Convert.ToByte(leaves[i].pow >= smallestPow) * smallestPow);
+			//pos[i] = leaves[i].pos;
 			r[i] = leaves[i].r;
 			g[i] = leaves[i].g;
 			b[i] = leaves[i].b;
@@ -127,8 +263,20 @@ class QuadtreeLeaves {
 
 		this.width = width;
 		this.height = height;
-		this.pow = pow;
 	}
+
+	public QuadtreeLeaf GetLeaf(int index) {
+		byte pow;
+		if (index % 2 == 0)
+			pow = (byte)(pows[index / 2] >> 4);
+		else
+			pow = (byte)(pows[index / 2] & 0xF);
+		return new QuadtreeLeaf(pow, 0, r[index], g[index], b[index]);
+	}
+
+	public int GetLeafCount() {
+		return pows.Length;
+    }
 }
 
 class QuadtreeLeaf {
@@ -169,7 +317,7 @@ class Quadtree1 {
 		byte pow = power = (byte)lw;
 
 		if (size == w && size == h) {
-			insertTextureRec(tex, 0, 0, pow, tolerance);
+			insertTextureRec(tex.GetPixels32(), size, 0, 0, pow, tolerance);
 		} else {
 			Texture2D newTex = new Texture2D(size, size, tex.format, false);
 			var blackArr = newTex.GetPixels32();
@@ -180,14 +328,14 @@ class Quadtree1 {
 			newTex.SetPixels32(blackArr);
 			newTex.SetPixels32(0, 0, w, h, tex.GetPixels32());
 			newTex.Apply();
-			insertTextureRec(newTex, 0, 0, pow, tolerance);
+			insertTextureRec(newTex.GetPixels32(), size, 0, 0, pow, tolerance);
 		}
 	}
 
-	bool insertTextureRec(Texture2D tex, int x, int y, byte pow, float tolerance) {
+	bool insertTextureRec(Color32[] tex, int texSize, int x, int y, byte pow, float tolerance) {
 		int size = (int)Mathf.Pow(2, pow);
 		if (size == 1) {
-			Color c = tex.GetPixel(x, y);
+			Color c = tex[x + y * texSize];
 			red = (byte)(c.r * 255);
 			green = (byte)(c.g * 255);
 			blue = (byte)(c.b * 255);
@@ -197,13 +345,13 @@ class Quadtree1 {
 
 		TrySubdivide();
 
-		if (!children[0].insertTextureRec(tex, x, y, (byte)(pow - 1), tolerance))
+		if (!children[0].insertTextureRec(tex, texSize, x, y, (byte)(pow - 1), tolerance))
 			children[0] = null;
-		if (!children[1].insertTextureRec(tex, x + size / 2, y, (byte)(pow - 1), tolerance))
+		if (!children[1].insertTextureRec(tex, texSize, x + size / 2, y, (byte)(pow - 1), tolerance))
 			children[1] = null;
-		if (!children[2].insertTextureRec(tex, x, y + size / 2, (byte)(pow - 1), tolerance))
+		if (!children[2].insertTextureRec(tex, texSize, x, y + size / 2, (byte)(pow - 1), tolerance))
 			children[2] = null;
-		if (!children[3].insertTextureRec(tex, x + size / 2, y + size / 2, (byte)(pow - 1), tolerance))
+		if (!children[3].insertTextureRec(tex, texSize, x + size / 2, y + size / 2, (byte)(pow - 1), tolerance))
 			children[3] = null;
 
 		//only void if all children are void
@@ -235,7 +383,7 @@ class Quadtree1 {
 					(colors[3].b - blue) * (colors[3].b - blue);
 		float t2 = tolerance * tolerance;
 		//if maximum tolerance distance is not exceeded, children are disposed, making the parent the end node
-		if (dist0 <= t2 && dist1 <= t2 && dist2 <= t2 && dist3 <= t2) {
+		if (dist0 < t2 && dist1 < t2 && dist2 < t2 && dist3 < t2) {
 			children = null;
 		}
 		return true;
@@ -256,41 +404,6 @@ class Quadtree1 {
 		return tex;
 	}
 
-	public QuadtreeLeaf[] GetLeaves(byte pow) {
-		return GetLeavesRec(pow, 0, 1).ToArray();
-	}
-
-	public List<QuadtreeLeaf> GetLeavesRec(byte pow, uint pos, int depth) {
-		int size = (int)Mathf.Pow(2, pow);
-		uint offset = (uint)Mathf.Pow(2, 15 - depth);//Mathf.Pow(2, 15) / Mathf.Pow(2, depth);
-		List<QuadtreeLeaf> leaves = new List<QuadtreeLeaf>();
-		if (!hasChildren()) {
-			leaves.Add(new QuadtreeLeaf(pow, pos, red, green, blue));
-		} else {
-			if (children[0] != null) {
-				uint x = (pos >> 8) - offset;
-				uint y = (pos % 1 << 8) - offset;
-				leaves.AddRange(children[0].GetLeavesRec((byte)(pow - 1), (x << 8) + y, depth + 1));
-			}
-			if (children[1] != null) {
-				uint x = (pos >> 8) + offset;
-				uint y = (pos % 1 << 8) - offset;
-				leaves.AddRange(children[1].GetLeavesRec((byte)(pow - 1), (x << 8) + y, depth + 1));
-			}
-			if (children[2] != null) {
-				uint x = (pos >> 8) - offset;
-				uint y = (pos % 1 << 8) + offset;
-				leaves.AddRange(children[2].GetLeavesRec((byte)(pow - 1), (x << 8) + y, depth + 1));
-			}
-			if (children[3] != null) {
-				uint x = (pos >> 8) + offset;
-				uint y = (pos % 1 << 8) + offset;
-				leaves.AddRange(children[3].GetLeavesRec((byte)(pow - 1), (x << 8) + y, depth + 1));
-			}
-		}
-		return leaves;
-	}
-
 	Color[] ToColorArrayRec(Color[] colors, int width, int height, int x, int y, int pow) {
 		int size = (int)Mathf.Pow(2, pow);
 		if (!hasChildren()) {
@@ -306,6 +419,43 @@ class Quadtree1 {
 			children[3]?.ToColorArrayRec(colors, width, height, x + size / 2, y + size / 2, pow - 1);
 		}
 		return colors;
+	}
+
+	public List<QuadtreeLeaf> GetLeaves(byte pow, int width, int height) {
+		return GetLeavesRec(pow, 0, width, height);
+	}
+
+	public List<QuadtreeLeaf> GetLeavesRec(byte pow, uint pos, int width, int height) {
+		uint size = (uint)Mathf.Pow(2, pow);
+		uint x = (pos >> 16);
+		uint y = (pos & 0xFFFF);
+		if (x >= width || y >= height) return null;
+		List<QuadtreeLeaf> leaves = new List<QuadtreeLeaf>();
+		if (!hasChildren()) {
+			leaves.Add(new QuadtreeLeaf(pow, pos, red, green, blue));
+		} else {
+			if (children[0] != null) {
+				var list = children[0].GetLeavesRec((byte)(pow - 1), (x << 16) + y, width, height);
+				if(list != null)
+					leaves.AddRange(list);
+			}
+			if (children[1] != null) {
+				var list = children[1].GetLeavesRec((byte)(pow - 1), ((x + size / 2) << 16) + y, width, height);
+				if (list != null)
+					leaves.AddRange(list);
+			}
+			if (children[2] != null) {
+				var list = children[2].GetLeavesRec((byte)(pow - 1), (x << 16) + y + size / 2, width, height);
+				if (list != null)
+					leaves.AddRange(list);
+			}
+			if (children[3] != null) {
+				var list = children[3].GetLeavesRec((byte)(pow - 1), ((x + size / 2) << 16) + y + size / 2, width, height);
+				if (list != null)
+					leaves.AddRange(list);
+			}
+		}
+		return leaves;
 	}
 
 	public bool hasChildren() {
