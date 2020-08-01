@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.Animations;
@@ -66,6 +67,8 @@ class QTTexture1 {
     byte pow;
     QuadtreeLeaves savedData;
 
+    //MyClass mc;
+
     public QTTexture1() {
         savedData = null;
         data = new Quadtree1();
@@ -83,11 +86,32 @@ class QTTexture1 {
     public void LoadTexture(string path) {
         if (File.Exists(path)) {
 
-            using (var fstream = new FileStream(path, FileMode.Open))
-            using (var gzipstream = new GZipStream(fstream, CompressionMode.Decompress, true)) {
-                savedData = (QuadtreeLeaves)(new BinaryFormatter().Deserialize(gzipstream));
-                width = savedData.width;
-                height = savedData.height;
+            byte[] file = File.ReadAllBytes(path);
+
+            using (var memstream = new MemoryStream(file))
+            using (var gzipstream = new GZipStream(memstream, CompressionMode.Decompress, true)) {
+                byte[] buffer = new byte[4096];
+                using (MemoryStream stream = new MemoryStream()) {
+                    int count = 0;
+                    do {
+                        count = gzipstream.Read(buffer, 0, buffer.Length);
+                        if (count != 0) {
+                            stream.Write(buffer, 0, count);
+                        }
+                    } while (count != 0);
+                    stream.Position = 0;
+                    savedData = (QuadtreeLeaves)(new BinaryFormatter().Deserialize(stream));
+                    width = savedData.width;
+                    height = savedData.height;
+                }
+
+                //savedData = (QuadtreeLeaves)(new BinaryFormatter().Deserialize(gzipstream));
+                //width = savedData.width;
+                //height = savedData.height;
+
+                //mc = (MyClass)(new BinaryFormatter().Deserialize(gzipstream));
+                //width = mc.GetWidth();
+                //height = mc.GetHeight();
             }
 
             //BinaryFormatter formatter = new BinaryFormatter();
@@ -106,17 +130,30 @@ class QTTexture1 {
     public void SaveToFile(string path) {
         if (savedData != null) return;
 
+        using (var memstream = new MemoryStream())
         using (var fstream = new FileStream(path, FileMode.Create))
         using (var gzipstream = new GZipStream(fstream, CompressionMode.Compress, true)) {
             var orderedNodes = data.GetLeaves(pow, width, height).OrderBy(p => (p.pos & 0xFFFF)).ThenBy(p => (p.pos >> 16));
             QuadtreeLeaves leaves = new QuadtreeLeaves(orderedNodes.ToArray(), width, height);
-            new BinaryFormatter().Serialize(gzipstream, leaves);
-            gzipstream.Flush();
-        }
+            new BinaryFormatter().Serialize(memstream, leaves);
+            byte[] bytes = memstream.ToArray();
 
+            gzipstream.Write(bytes, 0, bytes.Length);
+
+            //Color32[] colors = new Color32[100 * 100];
+            //for (int i = 0; i < colors.Length; i++) {
+            //    colors[i] = new Color32((byte)(UnityEngine.Random.value * 255), (byte)(UnityEngine.Random.value * 255), (byte)(UnityEngine.Random.value * 255), 255);
+            //}
+
+            //mc = new MyClass(colors, 100, 100);
+            //new BinaryFormatter().Serialize(gzipstream, mc);
+        }
     }
 
     public Texture2D ToTexture2D() {
+        //Texture2D tex = new Texture2D(mc.GetWidth(), mc.GetHeight(), TextureFormat.RGBA32, false);
+        //tex.SetPixels32(mc.GetPixels());
+        //tex.Apply();
         if (savedData == null) return data.ToTexture2D(width, height, pow);
 
         //generate from loaded qtimg
@@ -161,14 +198,91 @@ class QTTexture1 {
     }
 }
 
+//[Serializable]
+//class MyClass : ISerializable{
+//    int width, height;
+//    byte[] r, g, b;
+
+//    public MyClass(SerializationInfo info, StreamingContext context) {
+//        width = (int)info.GetValue("A", typeof(int));
+//        height = (int)info.GetValue("B", typeof(int));
+
+//        r = (byte[])info.GetValue("Red", typeof(byte[]));
+//        g = (byte[])info.GetValue("Green", typeof(byte[]));
+//        b = (byte[])info.GetValue("Blue", typeof(byte[]));
+//    }
+
+//    public void GetObjectData(SerializationInfo info, StreamingContext context) {
+//        info.AddValue("A", width);
+//        info.AddValue("B", height);
+
+//        info.AddValue("Red", r);
+//        info.AddValue("Green", g);
+//        info.AddValue("Blue", b);
+//    }
+
+//    public MyClass(Color32[] data, int width, int height) {
+//        this.width = width;
+//        this.height = height;
+//        r = new byte[data.Length];
+//        g = new byte[data.Length];
+//        b = new byte[data.Length];
+//        for (int i = 0; i < data.Length; i++) {
+//            r[i] = data[i].r;
+//            g[i] = data[i].g;
+//            b[i] = data[i].b;
+//        }
+//    }
+
+//    public int GetWidth() {
+//        return width;
+//    }
+//    public int GetHeight() {
+//        return height;
+//    }
+
+//    public Color32[] GetPixels() {
+//        Color32[] pixels = new Color32[r.Length];
+//        for (int i = 0; i < r.Length; i++) {
+//            pixels[i].r = r[i];
+//            pixels[i].g = g[i];
+//            pixels[i].b = b[i];
+//            pixels[i].a = 255;
+//        }
+//        return pixels;
+//    }
+//}
+
 [Serializable]
-class QuadtreeLeaves {
+class QuadtreeLeaves /*: ISerializable*/ {
     public int width, height;
     public byte smallestPow;
 
     public byte[] pows;
     //public uint[] pos;
     public byte[] r, g, b;
+
+    //public QuadtreeLeaves(SerializationInfo info, StreamingContext context) {
+    //    width = (int)info.GetValue("Width", typeof(int));
+    //    height = (int)info.GetValue("Height", typeof(int));
+    //    smallestPow = (byte)info.GetValue("SmallestPow", typeof(byte));
+
+    //    pows = (byte[])info.GetValue("Pows", typeof(byte[]));
+    //    r = (byte[])info.GetValue("Red", typeof(byte[]));
+    //    g = (byte[])info.GetValue("Green", typeof(byte[]));
+    //    b = (byte[])info.GetValue("Blue", typeof(byte[]));
+    //}
+
+    //public void GetObjectData(SerializationInfo info, StreamingContext context) {
+    //    info.AddValue("Width", width);
+    //    info.AddValue("Height", height);
+    //    info.AddValue("SmallestPow", smallestPow);
+
+    //    info.AddValue("Pows", pows);
+    //    info.AddValue("Red", r);
+    //    info.AddValue("Green", g);
+    //    info.AddValue("Blue", b);
+    //}
 
     public QuadtreeLeaves(QuadtreeLeaf[] leaves, int width, int height) {
         if (leaves.Length % 2 == 0)
@@ -212,7 +326,7 @@ class QuadtreeLeaves {
     }
 
     public int GetLeafCount() {
-        return pows.Length;
+        return r.Length;
     }
 }
 
