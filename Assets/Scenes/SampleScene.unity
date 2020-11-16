@@ -263,6 +263,7 @@ GameObject:
   - component: {fileID: 815779609}
   - component: {fileID: 815779610}
   - component: {fileID: 815779608}
+  - component: {fileID: 815779611}
   m_Layer: 0
   m_Name: VideoCompressor
   m_TagString: Untagged
@@ -328,7 +329,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 843965d87833b83469599f4bb3b97a1e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mat: {fileID: 2100000, guid: ba7fe65fdd490004bb6e4d73da3ce204, type: 2}
+  renderMaterial: {fileID: 0}
+--- !u!114 &815779611
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 815779607}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: edbb3d458efa62447943216deb2d4390, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1114086835
 GameObject:
   m_ObjectHideFlags: 0
