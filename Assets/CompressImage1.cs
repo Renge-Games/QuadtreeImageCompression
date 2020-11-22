@@ -262,28 +262,6 @@ class QuadtreeLeaves /*: ISerializable*/ {
     //public uint[] pos;
     public byte[] r, g, b;
 
-    //public QuadtreeLeaves(SerializationInfo info, StreamingContext context) {
-    //    width = (int)info.GetValue("Width", typeof(int));
-    //    height = (int)info.GetValue("Height", typeof(int));
-    //    smallestPow = (byte)info.GetValue("SmallestPow", typeof(byte));
-
-    //    pows = (byte[])info.GetValue("Pows", typeof(byte[]));
-    //    r = (byte[])info.GetValue("Red", typeof(byte[]));
-    //    g = (byte[])info.GetValue("Green", typeof(byte[]));
-    //    b = (byte[])info.GetValue("Blue", typeof(byte[]));
-    //}
-
-    //public void GetObjectData(SerializationInfo info, StreamingContext context) {
-    //    info.AddValue("Width", width);
-    //    info.AddValue("Height", height);
-    //    info.AddValue("SmallestPow", smallestPow);
-
-    //    info.AddValue("Pows", pows);
-    //    info.AddValue("Red", r);
-    //    info.AddValue("Green", g);
-    //    info.AddValue("Blue", b);
-    //}
-
     public QuadtreeLeaves(QuadtreeLeaf[] leaves, int width, int height) {
         if (leaves.Length % 2 == 0)
             pows = new byte[leaves.Length / 2];
