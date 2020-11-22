@@ -183,11 +183,55 @@ public class OctreeTexture2DArray {
 		return new Color32(red, green, blue, 1);
 	}
 
-	public Color[] GetFrame(int frame) {
-		return new Color[1];
+	public LeafNode[] GetFrame(int frame, int width, int height) {
+		return new LeafNode[0];
+	}
+
+	LeafNode[] GetFrameRec(int frame, int width, int height) {
+		return new LeafNode[0];
 	}
 
 	public OctreeTexture2DArray() {
 		red = green = blue = 0;
 	}
 }
+
+public class LeafNode {
+	public Color color;
+	public Vector3 position;
+	public byte pow;
+
+	public LeafNode() {
+		color = new Color(0, 0, 0, 0);
+		position = new Vector3();
+		pow = 0;
+	}
+
+	public LeafNode(Color color, Vector3 position, byte pow) {
+		this.color = color;
+		this.position = position;
+		this.pow = pow;
+	}
+}
+
+
+//float packing
+
+
+//const float c_precision = 128.0;
+//const float c_precisionp1 = c_precision + 1.0;
+
+//float color2float(vec3 color)
+//	color = clamp(color, 0.0, 1.0);
+//return floor(color.r * c_precision + 0.5)
+//	+ floor(color.b * c_precision + 0.5) * c_precisionp1
+//	+ floor(color.g * c_precision + 0.5) * c_precisionp1 * c_precisionp1;
+//}
+
+//vec3 float2color(float value) {
+//	vec3 color;
+//	color.r = mod(value, c_precisionp1) / c_precision;
+//	color.b = mod(floor(value / c_precisionp1), c_precisionp1) / c_precision;
+//	color.g = floor(value / (c_precisionp1 * c_precisionp1)) / c_precision;
+//	return color;
+//}
